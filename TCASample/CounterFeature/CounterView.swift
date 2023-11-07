@@ -19,6 +19,7 @@ struct CounterView: View {
           .padding()
           .background(Color.black.opacity(0.1))
           .cornerRadius(10)
+        
         HStack {
           Button("-") {
             viewStore.send(.decrementButtonTapped)
@@ -36,6 +37,7 @@ struct CounterView: View {
           .background(Color.black.opacity(0.1))
           .cornerRadius(10)
         }
+        
         Button(viewStore.isTimerRunning ? "Stop timer" : "Start timer") {
           viewStore.send(.toggleTimerButtonTapped)
         }
@@ -43,6 +45,7 @@ struct CounterView: View {
         .padding()
         .background(Color.black.opacity(0.1))
         .cornerRadius(10)
+        
         Button("Fact") {
             viewStore.send(.factButtonTapped)
           }
@@ -50,6 +53,7 @@ struct CounterView: View {
           .padding()
           .background(Color.black.opacity(0.1))
           .cornerRadius(10)
+        
         if viewStore.isLoading {
           ProgressView()
         } else if let fact = viewStore.fact {
