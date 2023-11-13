@@ -35,8 +35,40 @@ struct CounterFeature: Reducer {
   
   func reduce(into state: inout State, action: Action) -> ComposableArchitecture.Effect<Action> {
     switch action {
+    case .incrementButtonTapped:
+      state.count += 1
+      state.fact = nil
+      return .none
+      
     case .decrementButtonTapped:
       state.count -= 1
+      state.fact = nil
+      return .none
+      
+    case .toggleTimerButtonTapped:
+      state.isTimerRunning.toggle()
+      if state.isTimerRunning {
+        // 2. Testing Features: Before
+        return .run { send in
+          while true {
+            try await Task.sleep(for: .seconds(1))
+            await send(.timerTick)
+          }
+        }
+        .cancellable(id: CancelID.timer)
+        // 2. Testing Features: After
+//        return .run { send in
+//          for await _ in self.clock.timer(interval: .seconds(1)) {
+//            await send(.timerTick)
+//          }
+//        }
+//       .cancellable(id: CancelID.timer)
+      } else {
+        return .cancel(id: CancelID.timer)
+      }
+      
+    case .timerTick:
+      state.count += 1
       state.fact = nil
       return .none
       
@@ -59,39 +91,6 @@ struct CounterFeature: Reducer {
       state.fact = fact
       state.isLoading = false
       return .none
-        
-    case .incrementButtonTapped:
-      state.count += 1
-      state.fact = nil
-      return .none
-      
-    case .timerTick:
-      state.count += 1
-      state.fact = nil
-      return .none
-      
-    case .toggleTimerButtonTapped:
-      state.isTimerRunning.toggle()
-      if state.isTimerRunning {
-        // 2. Testing Features: Before
-        return .run { send in
-          while true {
-            try await Task.sleep(for: .seconds(1))
-            await send(.timerTick)
-          }
-        }
-        .cancellable(id: CancelID.timer)
-        
-        // 2. Testing Features: After
-//        return .run { send in
-//          for await _ in self.clock.timer(interval: .seconds(1)) {
-//            await send(.timerTick)
-//          }
-//        }
-//       .cancellable(id: CancelID.timer)
-      } else {
-        return .cancel(id: CancelID.timer)
-      }
     }
   }
 }
