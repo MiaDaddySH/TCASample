@@ -8,7 +8,9 @@
 import ComposableArchitecture
 import Foundation
 
-struct CounterFeature: Reducer {
+@Reducer
+struct CounterFeature {
+  @ObservableState
   struct State: Equatable {
     var count = 0
     var fact: String?
@@ -27,13 +29,10 @@ struct CounterFeature: Reducer {
   
   enum CancelID { case timer }
   
-  // 2. Testing Features
-//  @Dependency(\.continuousClock) var clock
+  @Dependency(\.continuousClock) var clock
+  @Dependency(\.numberFact) var numberFact
   
-  // 3. Testing Network Request
-//  @Dependency(\.numberFact) var numberFact
-  
-  func reduce(into state: inout State, action: Action) -> ComposableArchitecture.Effect<Action> {
+  func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .incrementButtonTapped:
       state.count += 1
@@ -48,21 +47,12 @@ struct CounterFeature: Reducer {
     case .toggleTimerButtonTapped:
       state.isTimerRunning.toggle()
       if state.isTimerRunning {
-        // 2. Testing Features: Before
         return .run { send in
-          while true {
-            try await Task.sleep(for: .seconds(1))
+          for await _ in self.clock.timer(interval: .seconds(1)) {
             await send(.timerTick)
           }
         }
-        .cancellable(id: CancelID.timer)
-        // 2. Testing Features: After
-//        return .run { send in
-//          for await _ in self.clock.timer(interval: .seconds(1)) {
-//            await send(.timerTick)
-//          }
-//        }
-//       .cancellable(id: CancelID.timer)
+       .cancellable(id: CancelID.timer)
       } else {
         return .cancel(id: CancelID.timer)
       }
@@ -77,14 +67,7 @@ struct CounterFeature: Reducer {
       state.isLoading = true
       
       return .run { [count = state.count] send in
-        // 3. Testing Nerwork Request: Before
-        let (data, _) = try await URLSession.shared
-          .data(from: URL(string: "http://numbersapi.com/\(count)")!)
-        let fact = String(decoding: data, as: UTF8.self)
-        await send(.factResponse(fact))
-        
-        // 3. Testing Nerwork Request: After
-//        try await send(.factResponse(self.numberFact.fetch(count)))
+        try await send(.factResponse(self.numberFact.fetch(count)))
       }
       
     case let .factResponse(fact):
